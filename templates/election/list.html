@@ -1,0 +1,110 @@
+{% extends "menu.html" %}
+{% load static %}
+{% block content %}
+<style>
+    .accordion{
+        width: 100%;
+    }
+</style>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<link href="{% static 'assets/css/styles.css' %}" rel="stylesheet">
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+<div class="container mt-4">
+    <span style="text-transform: uppercase; font-weight: bold; font-size: 1.4em; margin-bottom: 2em;;">Welcome to AUCA Contests Management and Voting Portal</span><br><br>
+
+    <div class="accordion" id="accordionExample">
+        {% for contest in contests %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ contest.id}} " aria-expanded="true" aria-controls="collapseOne">
+              {{ contest.name }}
+            </button>
+          </h2>
+          <div id="collapse{{ contest.id }}" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+            <div class="accordion-body" style="text-align: justify;">
+                {{ contest.description }} 
+                <br><br>
+                {% if contest.end_date > now %}
+                    <button class="btn btn-primary" style="float: right;" id="voteButton" data-contest-id="{{ contest.id }}">Vote for {{ contest.name}}</button>
+                    {% endif %}
+                <span class="text-muted">Voting open until: </span>
+                <div style="font-size: .8em;">
+                    <i class="fas fa-calendar-alt text-muted"></i> <strong> <span id="start-date">{{ contest.end_date|date:"M j, Y" }}</strong></span>&nbsp; &nbsp;
+                    <i class="fas fa-clock text-muted"></i><span id="start-time"> {{ contest.end_date|date:"h i, A" }}</span>
+                </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+
+    <div class="modal fade modal-lg" id="voteModal" tabindex="-1" aria-labelledby="voteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="voteModalLabel">Vote</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="modalFormContent"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="submitVoteButton">Submit Vote</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <script>
+        $(document).ready(function(){
+          $('#voteButton').on('click', function() {
+            var contestId = $(this).data('contest-id');
+            $.ajax({
+              url: 'form/' + contestId + '/',  
+              method: 'GET',
+              success: function(data) {
+                $('#modalFormContent').html(data);  // Inject form content into modal body
+                $('#voteModal').modal('show');  // Show the modal
+              },
+              error: function() {
+                alert('Failed to load the voting form. Please try again.');
+              }
+            });
+          });
+      
+          // Handle form submission with AJAX
+          $('#submitVoteButton').on('click', function() {
+            var form = $('#voteForm');
+            $.ajax({
+              url: form.attr('action'),
+              method: form.attr('method'),
+              data: form.serialize(),
+              success: function(response) {
+                if (response.success) {
+                  alert("Thank you for voting!");
+                  $('#voteModal').modal('hide');  // Hide modal after successful submission
+                } else {
+                  $('#modalFormContent').html(response.html);  // Reload form with errors
+                }
+              }
+            });
+          });
+        });
+      </script>
+      
+{% endblock %}
+

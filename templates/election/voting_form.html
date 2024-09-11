@@ -1,0 +1,30 @@
+<form id="voteForm" method="POST" action="{% url 'submit_vote' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="candidate_id" class="form-label">Select Candidate</label>
+      <select id="candidate_id" name="candidate_id" class="form-control">
+        {% for candidate in candidates %}
+          <option value="{{ candidate.id }}">{{ candidate.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  
+    <div class="mb-3">
+      <label for="voter_name" class="form-label">Your Name</label>
+      {{ form.voter_name }}
+    </div>
+    <div class="mb-3">
+      <label for="voter_email" class="form-label">Your Email</label>
+      {{ form.voter_email }}
+    </div>
+    <div class="mb-3">
+      <label for="voter_gender" class="form-label">Gender</label>
+      {{ form.voter_gender }}
+    </div>
+    <div class="mb-3">
+      <label for="voter_province" class="form-label">Province</label>
+      {{ form.voter_province }}
+    </div>
+    <input type="hidden" name="contest_id" value="{{ contest.id }}">
+  </form>
+  
