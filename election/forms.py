@@ -13,3 +13,4 @@ class VoteForm(forms.Form):
         ('West', 'West'),
         ('South', 'South')
     ], widget=forms.Select(attrs={'class': 'form-control'}))
+
