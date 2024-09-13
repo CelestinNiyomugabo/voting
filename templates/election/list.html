@@ -32,11 +32,16 @@
           </h2>
           <div id="collapse{{ contest.id }}" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
             <div class="accordion-body" style="text-align: justify;">
-                {{ contest.description }} 
-                <br><br>
-                {% if contest.end_date > now %}
-                    <button class="btn btn-primary" style="float: right;" id="voteButton" data-contest-id="{{ contest.id }}">Vote for {{ contest.name}}</button>
+                {{ contest.description|safe }} 
+                <div style="margin: 5px; float: right;">
+                <a href="{% url 'contest' contest.id  %}">
+                <button class="btn btn-primary" id=""><i class="fa fa-eye"></i></button>
+                </a>
+
+                {% if contest.end_date >= now and  contest.start_date <= now %}
+                    <button class="btn btn-primary voteButton"  id="" data-contest-id="{{ contest.id }}">Vote for {{ contest.name}}</button>
                     {% endif %}
+                </div>
                 <span class="text-muted">Voting open until: </span>
                 <div style="font-size: .8em;">
                     <i class="fas fa-calendar-alt text-muted"></i> <strong> <span id="start-date">{{ contest.end_date|date:"M j, Y" }}</strong></span>&nbsp; &nbsp;
@@ -61,8 +66,7 @@
               <div id="modalFormContent"></div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" id="submitVoteButton">Submit Vote</button>
+              <span class="text-danger error_message"></span>
             </div>
           </div>
         </div>
@@ -71,14 +75,14 @@
 
       <script>
         $(document).ready(function(){
-          $('#voteButton').on('click', function() {
+          $('.voteButton').on('click', function() {
             var contestId = $(this).data('contest-id');
             $.ajax({
               url: 'form/' + contestId + '/',  
               method: 'GET',
               success: function(data) {
-                $('#modalFormContent').html(data);  // Inject form content into modal body
-                $('#voteModal').modal('show');  // Show the modal
+                $('#modalFormContent').html(data); 
+                $('#voteModal').modal('show'); 
               },
               error: function() {
                 alert('Failed to load the voting form. Please try again.');
@@ -96,15 +100,51 @@
               success: function(response) {
                 if (response.success) {
                   alert("Thank you for voting!");
-                  $('#voteModal').modal('hide');  // Hide modal after successful submission
+                  $('#voteModal').modal('hide');  
                 } else {
-                  $('#modalFormContent').html(response.html);  // Reload form with errors
+                  $('#modalFormContent').html(response.html); 
                 }
               }
             });
           });
         });
       </script>
+
+
+
+  <script>
+    // Send OTP button click event
+    $('#sendOtpButton').on('click', function() {
+      var voterEmail = $('#voter_email').val();
+      alert(voterEmail);
+  
+      // Send AJAX request to send OTP
+      $.ajax({
+        url: '{% url "send_otp" %}',  // URL for sending OTP (set this in your Django URLs)
+        method: 'POST',
+        data: {
+          'email': voterEmail,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'  // CSRF token for POST requests
+        },
+        success: function(response) {
+          if (response.status === 'success') {
+            // Show OTP input field and the Submit button
+            $('#otp_code_container').show();
+            $('#submitVoteButton').show();
+  
+            // Disable the Send OTP button to prevent resending
+            $('#sendOtpButton').attr('disabled', 'disabled');
+            alert('OTP has been sent to your email.');
+          } else {
+            alert('Failed to send OTP. Please try again.');
+          }
+        },
+        error: function() {
+          alert('Error in sending OTP. Please try again.');
+        }
+      });
+    });
+  </script>
       
 {% endblock %}
 

@@ -1,4 +1,4 @@
-<form id="voteForm" method="POST" action="{% url 'submit_vote' %}">
+{% comment %} <form id="voteForm" method="POST" action="{% url 'submit_vote' %}">
     {% csrf_token %}
     <div class="mb-3">
       <label for="candidate_id" class="form-label">Select Candidate</label>
@@ -18,6 +18,10 @@
       {{ form.voter_email }}
     </div>
     <div class="mb-3">
+        <label for="voter_email" class="form-label">Phone number</label>
+        {{ form.voter_phone }}
+      </div>
+    <div class="mb-3">
       <label for="voter_gender" class="form-label">Gender</label>
       {{ form.voter_gender }}
     </div>
@@ -26,5 +30,188 @@
       {{ form.voter_province }}
     </div>
     <input type="hidden" name="contest_id" value="{{ contest.id }}">
+
+
+    <button type="button" class="btn btn-primary" id="sendOtpButton">Send OTP</button>
+
+    <div class="mb-3" id="otp_code_container" style="display:none;">
+        <label for="otp_code" class="form-label">OTP Code</label>
+        {{ form.otp_code }}
+    </div>
+
+    <button type="submit" class="btn btn-success" id="submitVoteButton" style="display:none;">Submit Vote</button>
   </form>
+  
+
+ {% endcomment %}
+
+
+
+
+ <form id="voteForm" method="POST" action="{% url 'submit_vote' %}">       
+    {% csrf_token %}
+    <div class="modal-body">
+          <div id="step1">
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" id="email" class="form-control" placeholder="Enter your email">
+              <input type="hidden" id="election_id" class="form-control" value="{{ contest.id }}">
+            </div>
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone number</label>
+              <input type="text" id="phone" class="form-control" placeholder="Enter your phone number" min-length="12" max-length="12">
+            </div>
+            <button type="button" class="btn btn-primary" id="validateButton">Validate</button>
+          </div>
+  
+          <!-- Step 2: OTP Validation -->
+          <div id="step2" style="display:none;">
+            <div class="mb-3">
+              <label for="otp_code" class="form-label">OTP Code</label>
+              <input type="text" id="otp_code" class="form-control" placeholder="Enter OTP">
+            </div>
+            <button type="button" class="btn btn-primary" id="verifyOtpButton">Verify OTP</button>
+          </div>
+  
+          <div id="step3" style="display:none;">
+            <div class="mb-3">
+              <label for="candidate" class="form-label">Select Candidate</label>
+              <select id="candidate" name="candidate_id" class="form-control">
+                {% for candidate in candidates %}
+                <option value="{{ candidate.id }}">{{ candidate.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="voter_gender" class="form-label">Name</label>
+                <input type="text" name="name" required id="name" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="voter_gender" class="form-label">Gender</label>
+              <select id="voter_gender" name="gender" class="form-control">
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="province" class="form-label">Province</label>
+              <select id="province" class="form-control" name="province">
+                <option value="Kigali">Kigali</option>
+                <option value="North">North</option>
+                <option value="East">East</option>
+                <option value="West">West</option>
+                <option value="South">South</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-success" id="submitVoteButton">Submit Vote</button>
+            
+          </div>
+        </div>
+    </form>
+ 
+  
+
+
+
+  <script>
+    $(document).ready(function() {
+    $('.error_message').hide();
+      $('#validateButton').on('click', function() {
+        var email = $('#email').val();
+        var phone = $('#phone').val();
+        var election_id = $('#election_id').val();
+      
+  
+        if (!email || !phone) {
+          $('.error_message').text(''); 
+          $('.error_message').text('Please enter both email and phone number'); 
+          return;
+        }
+        if (phone.length !== 12) {
+            $('.error_message').text(''); 
+            $('.error_message').text('Phone number must be 12 digits. Make sure the country code is specified'); 
+            return;
+        }
+        const phoneRegex = /^\d{12}$/; 
+        if (!phoneRegex.test(phone)) {
+            $('.error_message').text(''); 
+            $('.error_message').text('Phone number must contain only digits'); 
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            $('.error_message').text(''); 
+            $('.error_message').text('Please enter a valid email address'); 
+            return;
+        }
+
+
+        $.ajax({
+          url: '{% url "send_otp" %}',  
+          method: 'POST',
+          data: {
+            'email': email,
+            'phone': phone,
+            'election_id': election_id,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'  
+          },
+          success: function(response) {
+            if (response.status === 'success') {
+              $('#step1').hide();
+              $('#step2').show();
+              $('.error_message').text(''); 
+              $('.error_message')
+                .removeClass('text-danger')  
+                .addClass('text-success')   
+                .text('OTP has been sent to your email and phone.'); 
+            } if(response.status === 'voted'){
+                $('.error_message').text(''); 
+                $('.error_message').text('You have already voted to this contest'); 
+            }
+            else {
+                $('.error_message').text(''); 
+                $('.error_message').text('Failed to send OTP. Please try again'); 
+            }
+          },
+          error: function() {
+            alert('Error in sending OTP. Please try again.');
+          }
+        });
+      });
+  
+      // Step 2: Handle OTP verification
+      $('#verifyOtpButton').on('click', function() {
+        $('#error_message').hide();
+        var otpCode = $('#otp_code').val();
+  
+        if (!otpCode) {
+          alert('Please enter the OTP.');
+          return;
+        }
+        // Send AJAX request to verify OTP
+        $.ajax({
+          url: '{% url "verify_otp" %}',  // Adjust URL to your endpoint for verifying OTP
+          method: 'POST',
+          data: {
+            'otp_code': otpCode,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'  // CSRF token for POST requests
+          },
+          success: function(response) {
+            if (response.status === 'verified') {
+              // Hide Step 2 (OTP field)
+              $('#step2').hide();
+              // Show Step 3 (Voting form fields)
+              $('#step3').show();
+            } else {
+              alert('Invalid OTP. Please try again.' + response.message);
+            }
+          },
+          error: function() {
+            alert('Error in verifying OTP. Please try again.');
+          }
+        });
+      });
+    });
+  </script>
   

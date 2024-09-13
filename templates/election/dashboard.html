@@ -1,0 +1,176 @@
+{% extends "menu.html" %}
+{% load static %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .inline{
+        display: inline;
+    }
+    .h3{
+        background: #1192cc;
+        color: #ffffff;
+        font-size: .8em;
+        padding: 10px;
+    }
+</style>
+
+<div class="container mt-5" style="width: 70%;">
+    <h1 class="text-center mb-4 h3">Voting Dashboard</h1>
+
+    <div class="row">
+        <!-- Voters per Contest (Bar Chart) -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title text-center h3"># of Voters for Each Contest</h3>
+                    <canvas id="electionGenderChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution of Voters by Gender (Pie Chart) -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title text-center h3">Distribution of Voters by Gender</h3>
+                    <canvas id="genderPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Voters by Province (Bar Chart) -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title text-center h3">Distribution of Voters by Province</h3>
+                    <canvas id="provinceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title text-center h3">Voters per candidate</h3>
+                    <canvas id="candidateChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Helper function to extract data for charts
+    function extractData(items, key) {
+        return items.map(item => item[key]);
+    }
+
+    // Chart 1: Voters per Election by Gender
+    const electionGenderCtx = document.getElementById('electionGenderChart').getContext('2d');
+    const electionGenderData = {{ election_data|safe }};
+    const elections = [...new Set(extractData(electionGenderData, 'election__name'))];
+    const maleVoters = electionGenderData.filter(data => data.voter_gender === 'M').map(data => data.voter_count);
+    const femaleVoters = electionGenderData.filter(data => data.voter_gender === 'F').map(data => data.voter_count);
+
+    const electionGenderChart = new Chart(electionGenderCtx, {
+        type: 'bar',
+        data: {
+            labels: elections,
+            datasets: [
+                {
+                    label: 'Male Voters',
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    data: maleVoters,
+                },
+                {
+                    label: 'Female Voters',
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    data: femaleVoters,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Chart 2: Male vs Female Voters (Pie Chart)
+    const genderPieCtx = document.getElementById('genderPieChart').getContext('2d');
+    const genderData = {{ gender_data|safe }};
+    const genderCounts = extractData(genderData, 'voter_count');
+
+    const genderPieChart = new Chart(genderPieCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Male', 'Female'],
+            datasets: [{
+                label: 'Gender Distribution',
+                backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
+                data: genderCounts
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+
+    // Chart 3: Voters per Province (Bar Chart)
+    const provinceCtx = document.getElementById('provinceChart').getContext('2d');
+    const provinceData = {{ province_data|safe }};
+    const provinces = extractData(provinceData, 'voter_province');
+    const provinceCounts = extractData(provinceData, 'voter_count');
+
+    const provinceChart = new Chart(provinceCtx, {
+        type: 'bar',
+        data: {
+            labels: provinces,
+            datasets: [{
+                label: 'Voters per Province',
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                data: provinceCounts
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+ 
+   // Chart 4: Votes per Candidate
+   const candidateCtx = document.getElementById('candidateChart').getContext('2d');
+   const candidateData = {{ candidate_data|safe }};
+   const candidates = extractData(candidateData, 'candidate__name');
+   const candidateCounts = extractData(candidateData, 'voter_count');
+
+   const candidateChart = new Chart(candidateCtx, {
+       type: 'bar',
+       data: {
+           labels: candidates,
+           datasets: [{
+               label: 'Votes per Candidate',
+               backgroundColor: 'rgba(153, 102, 255, 0.7)',
+               data: candidateCounts
+           }]
+       }
+   });
+
+</script>
+
+{% endblock %}

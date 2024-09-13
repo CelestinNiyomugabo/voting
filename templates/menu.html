@@ -35,18 +35,21 @@
                         <a class="nav-link active" aria-current="page" href="{% url 'home' %}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Contests</a>
+                        <a class="nav-link" href="{% url 'add_contest' %}">Add Contest</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>
                     </li>
                     {% if not request.session.student_id and not user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Register</a>
+                        <a class="nav-link" href="{% url 'register' %}">Register</a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}"><span>Blog</span></a>
+                        <a class="nav-link" href="{% url 'add_contestant' %}"><span>Add_Contestant</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}"><span>Dashboard</span></a>
                     </li>
                 </ul>
                 <ul class="navbar-nav ml-auto">
@@ -55,11 +58,11 @@
                             <a class="nav-link" href="{% url 'home' %}">Create new article</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'home' %}">Logout</a>
+                            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'home' %}">Login</a>
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
                         </li>
                     {% endif %}
                 </ul>

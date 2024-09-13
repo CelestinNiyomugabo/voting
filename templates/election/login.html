@@ -1,0 +1,49 @@
+{% extends 'menu.html' %}
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Login{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+
+{% block content %}
+<div class="container mt-5 register-container">
+    <h3 class="text-left">Login to your account</h3>
+    
+
+    <form method="post" class="mt-4" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" name="email" class="form-control" id="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" id="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button> New to this platform? <a href="{% url 'register' %}">Create an account</a>
+    </form>
+
+    {% if messages %}
+    <br>
+    <div class="alert alert-danger" role="alert" style="padding: 0px;">
+        <div class="alert-messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}. 
+                    {% if message.message == 'Student with such email does not exist' %}
+                    <a href="{% url 'register' %}">Create a new student account</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}
+
+

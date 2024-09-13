@@ -137,9 +137,16 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+# Email settings for sending real emails via Gmail
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.vonsung.co.rw'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'celestin@vonsung.co.rw'
-EMAIL_HOST_PASSWORD = 'Celos@123'
+EMAIL_HOST_USER = 'celosrenos@gmail.com'
+EMAIL_HOST_PASSWORD = 'dzlt sppa qelb pdwg'
+DEFAULT_FROM_EMAIL = 'noreply@auca.ac.rw'
+
+
+
+telegram_token = "7503721863:AAFWPm6sPltDFmuLeF7bQaSSmfPx60U_Tsw"
+telegram_chat_id = "5551929479"
