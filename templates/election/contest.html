@@ -7,7 +7,7 @@
         {% if request.session.aucauser_name %}
         <p class="lead blog-description text-default" style="font-size: 15px">You are logged in as {{ request.session.aucauser_name}} and you can 
             <a href="{% url 'contest_edit' object.pk %}">Edit</a> or
-            <a href="{% url 'contest_delete' object.pk %}" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a> this contest. Click <a href="{% url 'add_contestant' object.pk %}" type="button" data-bs-toggle="modal" data-bs-target="#addContestantModal">here</a> to add a contestant
+            <a href="{% url 'contest_delete' object.pk %}" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a> this contest.
         </p>
         {% endif %}
       </div>
@@ -17,6 +17,11 @@
           <div class="blog-post">
             {% comment %} <img src="{{ object.image.url }}" width="100%" style="max-height: 400px;"> <br><br> {% endcomment %}
             {{ object.description|safe }}
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+            <canvas id="votesChart"></canvas>
+
           </div>
 
           
@@ -102,6 +107,34 @@
         </div>
     </div>
 </div>
+
+
+<script>
+    var ctx = document.getElementById('votesChart').getContext('2d');
+
+    var candidateData = {{ candidate_votes|safe }};
+    var candidateNames = candidateData.map(candidate => candidate.name);
+    var voteCounts = candidateData.map(candidate => candidate.votes);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: candidateNames,
+            datasets: [{
+                label: 'Votes per Candidate',
+                data: voteCounts,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
 
 
 {% endblock %}

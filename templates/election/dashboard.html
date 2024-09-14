@@ -50,7 +50,7 @@
             </div>
         </div>
 
-        <div class="col-md-12">
+        <div class="col-md-12 mt-4">
             <div class="card">
                 <div class="card-body">
                     <h3 class="card-title text-center h3">Voters per candidate</h3>
@@ -81,12 +81,12 @@
             datasets: [
                 {
                     label: 'Male Voters',
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    backgroundColor: '#1392cb',
                     data: maleVoters,
                 },
                 {
                     label: 'Female Voters',
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    backgroundColor: '#20c64b',
                     data: femaleVoters,
                 }
             ]
@@ -107,12 +107,12 @@
     const genderCounts = extractData(genderData, 'voter_count');
 
     const genderPieChart = new Chart(genderPieCtx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: ['Male', 'Female'],
             datasets: [{
                 label: 'Gender Distribution',
-                backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
+                backgroundColor: ['#1392cb', '#20c64b'],
                 data: genderCounts
             }]
         },
@@ -132,20 +132,33 @@
     const provinces = extractData(provinceData, 'voter_province');
     const provinceCounts = extractData(provinceData, 'voter_count');
 
+    // Combine provinces and counts into a single array to sort them together
+    const provinceArray = provinces.map((province, index) => {
+        return { province: province, count: provinceCounts[index] };
+    });
+
+    // Sort the array by voter count in descending order
+    provinceArray.sort((a, b) => b.count - a.count);
+
+    // Extract sorted provinces and counts
+    const sortedProvinces = provinceArray.map(item => item.province);
+    const sortedCounts = provinceArray.map(item => item.count);
+
     const provinceChart = new Chart(provinceCtx, {
-        type: 'bar',
+        type: 'bar',  // 'bar' type, but use horizontal direction
         data: {
-            labels: provinces,
+            labels: sortedProvinces,
             datasets: [{
                 label: 'Voters per Province',
                 backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                data: provinceCounts
+                data: sortedCounts
             }]
         },
         options: {
+            indexAxis: 'y',  // This makes the bar chart horizontal
             responsive: true,
             scales: {
-                y: {
+                x: {  // For the x-axis (previously y-axis in vertical charts)
                     beginAtZero: true
                 }
             }

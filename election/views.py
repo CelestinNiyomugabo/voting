@@ -9,6 +9,7 @@ from django.http import JsonResponse
 import random
 from django.views.decorators.csrf import csrf_exempt
 from .whatsapp import send_whatsapp_message
+from .mista import send_sms
 import requests
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -16,6 +17,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count, Q
+import json
 
 
 
@@ -77,21 +79,25 @@ def about(request):
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-# from .models import Blog
 from django import forms
-
-
-# class ArticleListView(ListView):
-#     model = Blog
-#     ordering = ['-timestamp'] 
-#     template_name = 'blog/home.html'
 
 
 class ContestView(DetailView):
     model = Election
     template_name = 'election/contest.html'
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        election = self.get_object()
+        candidates = Candidate.objects.filter(election=election)
+        candidate_votes = [
+            {
+                'name': candidate.name,
+                'votes': Vote.objects.filter(candidate=candidate).count()
+            }
+            for candidate in candidates
+        ]
+        context['candidate_votes'] = candidate_votes
         return context
 
 
@@ -195,12 +201,11 @@ def send_otp(request):
         phone = request.POST.get('phone')
         election_id = request.POST.get('election_id')
 
-        # if Vote.objects.filter(voter_email=email, election_id=election_id).exists():
-        #     return JsonResponse({'status': 'voted', 'message': 'You have already voted in this election'})
-        #     return render(request, 'election/voting_confirmation.html', {'success': False, 'message': 'You have already voted in this election.'})
+        if Vote.objects.filter(voter_email=email, election_id=election_id).exists():
+            return JsonResponse({'status': 'voted', 'message': 'You have already voted in this election'})
 
 
-        if email and phone:
+        elif email and phone:
             otp = generate_otp()
             request.session['email'] = email
             request.session['phone'] = phone
@@ -218,8 +223,20 @@ def send_otp(request):
             
        
             send_whatsapp_message(phone, otp)
+            # JsonResponse(send_sms(phone, otp))
             
-            # return response
+
+            url = "https://pay.vonsung.rw/api/send_sms"
+            payload = json.dumps({
+            "phone": phone,
+            "message": f'Your AUCA platform voting OTP code is {otp}',
+            "sender_id": "VONSUNG"
+            })
+            headers = {
+            'Content-Type': 'application/json'
+            }
+            requests.request("POST", url, headers=headers, data=payload)
+
 
             # print(f'SMS OTP sent to {phone}: {otp}')
 
@@ -248,6 +265,7 @@ def test_otp(request):
     phone = "250788604106"
     code = "1234"
     response = send_telegram_message('5551929479', code)
+    
     return response
 
 
@@ -335,7 +353,7 @@ def register(request):
             message = f'Dear {request.POST.get('name')}! Thank you for registering with us. We are glad to have you on board!. Use { request.POST.get('email')} as your account username and { request.POST.get('password')} as your password to login to your user account'
             email_from = settings.EMAIL_HOST_USER
             EMAIL_USE_LOCALHOST = True
-            recipient_list = ['celestin@vonsung.co.rw']
+            recipient_list = [request.POST.get('email')]
             
             send_mail(subject, message, email_from, recipient_list)
             return redirect('home')
